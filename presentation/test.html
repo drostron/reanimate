@@ -1,0 +1,34 @@
+<html>
+<body>
+  <video id="vid1" muted src="doc_drawBox.mp4">
+  </video>
+  <script type="text/javascript">
+    var vid1 = document.getElementById('vid1');
+    var ticks = 0;
+    vid1.addEventListener('play', (event) => {
+      ticks = 0;
+    });
+    vid1.addEventListener('ended', (event) => {
+      console.log('Ticks:', ticks);
+    });
+    vid1.playbackRate = 0.5;
+    //vid1.play();
+    function cb() {
+      ticks++;
+      //if(ticks % 1 == 0)
+      //  console.log('at', Math.round(vid1.currentTime*60));
+      //if(vid1.currentTime > 1)
+      //  vid1.currentTime = 0;
+      if(!vid1.ended)
+        window.requestAnimationFrame(cb);
+      else {
+        vid1.playbackRate = -1;
+        //vid1.src = "doc_drawCircle.mp4";
+        vid1.play();
+      }
+    }
+    window.requestAnimationFrame(cb);
+    setTimeout(function() { console.log('Ticks:', ticks); }, 5000);
+  </script>
+</body>
+</html>
