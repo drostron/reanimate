@@ -5,6 +5,7 @@ import           Control.Monad.Fix
 import           Control.Monad.ST
 import           Data.List
 import           Data.STRef
+import           Data.Fixed
 import           Reanimate.Animation
 import           Reanimate.Signal
 import           Reanimate.Effect
@@ -217,9 +218,14 @@ newSprite render = do
     (spriteDuration, spriteEffectGen) <- readSTRef ref
     spriteEffect <- spriteEffectGen
     return $ \d absT ->
-      let relD = (if spriteDuration < 0 then d else spriteDuration)-now
+      let absD = if spriteDuration < 0 then d else spriteDuration
+          relD = absD-now
           relT = absT-now in
-      if relT < 0 || relD < relT
+      -- relT /must/ be non-negative.
+      -- relD must be less than relT /unless/ we're at the end of the animation.
+      -- Sprites in the middle of an animation run from [0;1[. Sprites at the end
+      -- run from [0;1].
+      if relT < 0 || (relD < relT && absD/=absT)
         then (None, 0)
         else spriteEffect relD relT (fn absT relD relT)
   return $ Sprite now ref
@@ -244,14 +250,14 @@ newSpriteA' sync animation = do
   return $ Sprite now ref
 
 getAnimationFrame :: Sync -> Animation -> Time -> Duration -> SVG
-getAnimationFrame sync (Animation aDur aGen) t d =
+getAnimationFrame sync ani t d =
   case sync of
-    SyncStretch -> aGen (t/d)
-    SyncLoop    -> aGen (takeFrac $ t/aDur)
-    SyncDrop    -> if t > aDur then None else aGen (t/aDur)
-    SyncFreeze  -> aGen (min 1 $ t/aDur)
+    SyncStretch -> frameAt (t/d * aDur) ani
+    SyncLoop    -> frameAt (t `mod'` aDur) ani
+    SyncDrop    -> if t > aDur then None else frameAt t ani
+    SyncFreeze  -> frameAt t ani
   where
-    takeFrac f = snd (properFraction f :: (Int, Double))
+    aDur = duration ani
 
 data Sync
   = SyncStretch

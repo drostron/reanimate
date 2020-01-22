@@ -62,7 +62,7 @@ overInterval :: Time -- ^ time after start of animation when the effect should s
              -> Time -- ^ time after start of the animation when the effect should finish
              -> Effect  -- ^ The Effect to modify
              -> Effect -- ^ Effect which will only affect the specified interval within the animation
-overInterval start end effect _d t = 
+overInterval start end effect _d t =
   if start <= t && t <= end
     then effect dur ((t - start) / dur)
     else id
@@ -79,7 +79,9 @@ delayE delayT fn = \d t -> overEnding (d-delayT) fn d t
 
 -- | Modify the animation by applying the effect. If desired, you can apply multiple effects to single animation by calling this function multiple times.
 applyE :: Effect -> Animation -> Animation
-applyE fn (Animation d genFrame) = Animation d $ \t -> fn d (d*t) $ genFrame t
+applyE fn ani = mapA' (\t -> fn d (d*t)) ani
+  where
+    d = duration ani
 
 -- | Build an effect from an image-modifying function. This effect does not change as time passes.
 constE :: (Tree -> Tree) -> Effect
@@ -123,7 +125,7 @@ scaleE target d t = scale (1 + (target-1) * t/d)
 translateE :: Double -> Double -> Effect
 translateE x y d t = translate (x * t/d) (y * t/d)
 
--- | Transform the effect so that the image passed to the effect's image-modifying 
+-- | Transform the effect so that the image passed to the effect's image-modifying
 -- function has coordinates (0, 0) shifted to the center of its bounding box.
 -- Also see 'aroundCenter'.
 aroundCenterE :: Effect -> Effect

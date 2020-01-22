@@ -1,34 +1,61 @@
 <html>
 <body>
-  <video id="vid1" muted src="doc_drawBox.mp4">
+  <video style="width: 100%;" id="vid1" muted src="doc_drawBox.mp4">
   </video>
   <script type="text/javascript">
     var vid1 = document.getElementById('vid1');
     var ticks = 0;
-    vid1.addEventListener('play', (event) => {
-      ticks = 0;
-    });
-    vid1.addEventListener('ended', (event) => {
-      console.log('Ticks:', ticks);
-    });
-    vid1.playbackRate = 0.5;
+    //vid1.playbackRate = 0.5;
     //vid1.play();
     function cb() {
       ticks++;
       //if(ticks % 1 == 0)
       //  console.log('at', Math.round(vid1.currentTime*60));
-      //if(vid1.currentTime > 1)
-      //  vid1.currentTime = 0;
+      if(vid1.currentTime > 1-1/60) {
+       console.log('reset at:', vid1.currentTime, Math.round(vid1.currentTime*60));
+       vid1.currentTime = 0;
+     }
       if(!vid1.ended)
         window.requestAnimationFrame(cb);
       else {
-        vid1.playbackRate = -1;
+        //vid1.playbackRate = -1;
         //vid1.src = "doc_drawCircle.mp4";
-        vid1.play();
+        //vid1.play();
       }
     }
-    window.requestAnimationFrame(cb);
+    vid1.addEventListener('play', (event) => {
+      ticks = 0;
+      window.requestAnimationFrame(cb);
+    });
+    vid1.addEventListener('ended', (event) => {
+      console.log('Ticks:', ticks);
+    });
     setTimeout(function() { console.log('Ticks:', ticks); }, 5000);
+    document.addEventListener('keydown', function(event) {
+      var fps = 60;
+      if(event.code=='Space') {
+        if(vid1.paused)
+          vid1.play();
+        else
+          vid1.pause();
+          event.stopPropagation();
+          event.preventDefault();
+      } else
+      if(event.code=='ArrowRight') {
+        console.log('t1', vid1.currentTime);
+        let frame = Math.round(vid1.currentTime*fps);
+        vid1.currentTime = (frame+1)/fps;
+        console.log('t2', vid1.currentTime);
+      } else
+      if(event.code=='ArrowLeft') {
+        console.log('t1', vid1.currentTime);
+        let frame = Math.round(vid1.currentTime*fps);
+        vid1.currentTime = (frame-1)/fps;
+        console.log('t2', vid1.currentTime);
+      }
+      console.log('press', event.code);
+      return;
+    });
   </script>
 </body>
 </html>
