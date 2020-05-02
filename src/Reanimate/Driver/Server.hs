@@ -8,6 +8,7 @@ import           Control.Concurrent
 import           Control.Exception       (SomeException, catch, finally)
 import           Control.Monad
 import           Control.Monad.Fix       (fix)
+import           Data.List               (intercalate)
 import           Data.Text               (Text)
 import qualified Data.Text               as T
 import qualified Data.Text.IO            as T
@@ -98,9 +99,12 @@ slaveHandler conn self svgDir =
     hClose handle
     lock <- newMVar ()
     sendTextData conn (T.pack "status\nCompiling")
-    ret <- runCmd_ "stack" $ ["ghc", "--"] ++ ghcOptions tmpDir ++ [takeFileName self, "-o", tmpExecutable]
+    let opts =  ghcOptions tmpDir ++ [takeFileName self, "-o", tmpExecutable]
+    putStrLn $ "ghc " ++ intercalate " " opts
+    ret <- runCmd_ "ghc" opts
     case ret of
-      Left err ->
+      Left err -> do
+        putStrLn $ "error: " ++ show err
         sendTextData conn $ T.pack $ "error\n" ++ unlines (drop 3 (lines err))
       Right{} -> runCmdLazy tmpExecutable execOpts $ \getFrame -> do
         (frameCount,_) <- expectFrame sem =<< getFrame
